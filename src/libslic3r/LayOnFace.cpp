@@ -236,9 +236,16 @@ void lay_on_face(ModelObject &object, size_t instance_idx, const Vec3d &normal)
     const Geometry::Transformation &trafo    = instance.get_transformation();
     // Same rotation as Selection::flattening_rotate(), which the gizmo uses.
     const Transform3d rotation = lay_on_face_rotation(normal, trafo.get_matrix_no_offset());
+    // The rotation is about the object's origin. The plater centres an object on its origin when it loads one, but a
+    // mesh loaded from the command line keeps the coordinates of its file, so its origin can be far from the part and
+    // the rotation would swing it off the plate. Keep the instance where it stands: its footprint stays centred on the
+    // same point of the plate.
+    const Vec3d centre_before = object.instance_bounding_box(instance_idx).center();
     instance.set_transformation(Geometry::Transformation(trafo.get_offset_matrix() * rotation * trafo.get_matrix_no_offset()));
-    // Drop this instance only: ensure_on_bed() skips instances without auto_drop and measures the first instance.
-    object.translate_instance(instance_idx, -object.instance_bounding_box(instance_idx).min.z() * Vec3d::UnitZ());
+    // Move this instance only: ensure_on_bed() skips instances without auto_drop and measures the first instance.
+    const BoundingBoxf3 box    = object.instance_bounding_box(instance_idx);
+    const Vec3d         centre = box.center();
+    object.translate_instance(instance_idx, Vec3d(centre_before.x() - centre.x(), centre_before.y() - centre.y(), -box.min.z()));
 }
 
 } // namespace Slic3r

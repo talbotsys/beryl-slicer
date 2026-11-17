@@ -43,7 +43,8 @@ int find_plane_at_point(const std::vector<LayOnFacePlane> &planes, const Transfo
                         const Vec3d &point, double tolerance);
 
 // Rotates the instance so that `normal` (object coordinates) points down, the same rotation as
-// the gizmo applies, then drops the instance so its lowest point is at z = 0.
+// the gizmo applies, then drops the instance so its lowest point is at z = 0. The instance stays
+// over the same point of the plate: the centre of its bounding box does not move in X or Y.
 void lay_on_face(ModelObject &object, size_t instance_idx, const Vec3d &normal);
 
 // The rotation that turns `normal` (object coordinates) to point down, given the instance's

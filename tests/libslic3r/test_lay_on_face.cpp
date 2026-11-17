@@ -133,6 +133,28 @@ TEST_CASE("Faces are chosen from the orientation left by an earlier part rotatio
     }
 }
 
+TEST_CASE("A part away from its object's origin stays over the same point of the plate", "[LayOnFace]")
+{
+    // A mesh loaded from the command line keeps the coordinates of its file, so the part can be far from the origin
+    // the rotation turns about. Laid on a side face, it must not swing away from where it stood.
+    Model        model;
+    ModelObject *object = model.add_object();
+    add_box(*object, { 40, 20, 10 }, { 100, 80, 0 });
+    object->add_instance();
+    const Vec3d centre_before = object->instance_bounding_box(0).center();
+
+    const std::vector<LayOnFacePlane> planes = instance_planes(*object);
+    const int                         idx    = find_plane_by_normal(planes, { -1, 0, 0 });
+    REQUIRE(idx >= 0);
+    lay_on_face(*object, 0, planes[idx].normal);
+
+    check_size(*object, { 10, 20, 40 });
+    check_on_bed(*object);
+    const Vec3d centre = object->instance_bounding_box(0).center();
+    CHECK_THAT(centre.x(), WithinAbs(centre_before.x(), 1e-3));
+    CHECK_THAT(centre.y(), WithinAbs(centre_before.y(), 1e-3));
+}
+
 TEST_CASE("Objects are laid on their own faces independently", "[LayOnFace]")
 {
     Model model;
